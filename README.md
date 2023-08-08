@@ -29,7 +29,13 @@ If fail follow the following steps:
         torch_sparse-0.6.16+pt112cu116-cp39-cp39-linux_x86_64.whl
         torch_spline_conv-1.2.1+pt112cu116-cp39-cp39-linux_x86_64.whl 
     ```
-+ install all the wheels downloaded and ```pip install torch_geometric```
++ Install all the wheels downloaded and run the command ```pip install torch_geometric```.
+
+## DataSet prepare
+
+---
++ Unzip '*.zip' files in dir 'data'.
++ The first time preprocessing training data will cost a lot of time and if you want to only get the preprocessed data, you can modify the dir in data_sc.py/data_sv.py and run the python file.
 
 ## Satisfiability Checking
 ---
@@ -40,9 +46,9 @@ If fail follow the following steps:
 
 ### How to test
 
-+ find the best model path: test record dir and saved best model name
-+ choose the test dataset: test data dir and test dataset
-+ run ``` python test_sc.py --trp <test record dir> --sbm <saved best model name> --dt <test data dir> --td <test dataset> ```
++ Find the best model path: test record dir and saved best model name
++ Choose the test dataset: test data dir and test dataset
++ Run ``` python test_sc.py --trp <test record dir> --sbm <saved best model name> --dt <test data dir> --td <test dataset> ```
 
 ## Satisfiable Trace Predicting
 ---
@@ -53,6 +59,6 @@ If fail follow the following steps:
 
 ### How to test
 
-+ find the best model path: test record dir and saved best model name
-+ choose the test dataset: test data dir and test dataset
-+ run ``` python train_sv.py --is_train 0 --trp <test record dir> --sbm <saved best model name> --dt <test data dir> --td <test dataset> ```
++ Find the best model path: test record dir and saved best model name
++ Choose the test dataset: test data dir and test dataset
++ Run ``` python train_sv.py --is_train 0 --trp <test record dir> --sbm <saved best model name> --dt <test data dir> --td <test dataset> ```

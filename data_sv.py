@@ -410,7 +410,7 @@ if __name__ == '__main__':
 
     device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
     start = time.time()
-    dataset = GLDataSet(root='data/LTLSATUNSAT-{and-or-not-F-G-X-until}-100-random/[100-200)/', name='debug.json')
+    dataset = GLDataSet(root='data/LTLSATUNSAT-{and-or-not-F-G-X-until}-100-random/[100-200)/', name='train.json')
 
     end_time_GLDataSet = time.time()
     time_GLDataSet = end_time_GLDataSet - start
