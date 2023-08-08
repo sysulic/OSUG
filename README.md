@@ -31,7 +31,7 @@ If fail follow the following steps:
     ```
 + Install all the wheels downloaded and run the command ```pip install torch_geometric```.
 
-## DataSet prepare
+## Dataset Prepare
 
 ---
 + Unzip '*.zip' files in dir 'data'.
