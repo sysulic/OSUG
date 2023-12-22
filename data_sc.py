@@ -365,9 +365,12 @@ class GLDataSet(InMemoryDataset):
 
         xx = []  
         for i in x:
-            xx.append(self.node_map[tuple(i)])
+            xxx = [0] * 12
+            xxx[self.node_map[tuple(i)]] = 1
+            xx.append(xxx)
+        # print(xx)
 
-        ver_list.append('U')       
+        ver_list.append('Universe')       
         u_index = len(ver_list) - 1
         for i in range(len(ver_list)-1):
             edge_index[0].append(i)
@@ -375,7 +378,8 @@ class GLDataSet(InMemoryDataset):
 
             edge_index[0].append(u_index)
             edge_index[1].append(i)
-        x = torch.tensor(xx, dtype=torch.long)
+        x = torch.tensor(xx, dtype=torch.float32)
+        # x = torch.tensor(x, dtype=torch.float32)
         edge_index = torch.tensor(edge_index, dtype=torch.long)
 
         return x, edge_index, ver_list, u_index
