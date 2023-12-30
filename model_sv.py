@@ -14,7 +14,11 @@ class GNN(torch.nn.Module):
         self.out_channels=out_channels
         self.SVNet = SVNet(hidden_channels, out_channels, num_layers)
         
-        self.embedding = nn.Embedding(in_channels, hidden_channels)
+        self.embedding = nn.Sequential(
+            Linear(in_channels, embedding_size),
+            nn.ReLU(),
+            Linear(embedding_size, embedding_size)
+        )
 
         self.mlp = nn.Sequential(
             Linear(hidden_channels * 2, hidden_channels),

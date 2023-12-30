@@ -21,7 +21,11 @@ class SCNet(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, num_layers=10, out_channels=2, embedding_size=128):
         super(SCNet, self).__init__()
      
-        self.embedding = nn.Embedding(in_channels, embedding_size)
+        self.embedding = nn.Sequential(
+            Linear(in_channels, embedding_size),
+            nn.ReLU(),
+            Linear(embedding_size, embedding_size)
+        )
 
         self.conv_layers = torch.nn.ModuleList()
         self.bn_layers = torch.nn.ModuleList()
