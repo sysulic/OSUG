@@ -367,7 +367,7 @@ class GLDataSet(InMemoryDataset):
         for i in x:
             xx.append(self.node_map[tuple(i)])
 
-        ver_list.append('U')       
+        ver_list.append('Universe')       
         u_index = len(ver_list) - 1
         for i in range(len(ver_list)-1):
             edge_index[0].append(i)
