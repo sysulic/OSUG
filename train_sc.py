@@ -54,10 +54,14 @@ def main(args):
                 hidden_channels=args.hc,
                 num_layers=args.nl,
                 out_channels=args.oc,
-                embedding_size=args.eds).to(device)
+                embedding_size=args.eds,
+                dropout=args.dropout).to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
     criterion = torch.nn.CrossEntropyLoss() 
+    if args.sbm is not None:
+        print(f"Load model at {args.sbm}.")
+        model.load_state_dict(torch.load(args.sbm, map_location=device))
 
     best_val_loss = float('inf')
     best_model = None
@@ -139,6 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=1e-3, help="learning rate")
     parser.add_argument('--bs', type=int, default=512, help="batch size")
     parser.add_argument('--ear', type=int, default=200, help="early stop after ear epochs")
+    parser.add_argument('--dropout', type=float, default=0.4, help="dropout rate")
     parser.add_argument('--wd', type=float, default=0, help="weight decay rate")
     parser.add_argument('--dv', type=str, default='cuda:0', help="device")
     parser.add_argument('--seed', type=int, default=1234)
@@ -149,6 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('--oc', type=int, default=2, help="number of class")
 
     parser.add_argument('--dt', type=str, default='data/LTLSATUNSAT-{and-or-not-F-G-X-until}-100-random/[100-200)/', help="data dir")
+    parser.add_argument('--sbm', type=str, default=None, help="save best model")
     parser.add_argument('--trd', type=str, default='train.json', help="training dataset")
     parser.add_argument('--vd', type=str, default='dev.json', help="validation dataset")
 
