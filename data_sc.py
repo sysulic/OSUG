@@ -29,11 +29,12 @@ class GLDataSet(InMemoryDataset):
     def __init__(self, root='data/test', name='train.json', node_map=0):
         self.root = root
         self.name = name
+        self.idx = 0    
         if not node_map:
             self.node_map = map_com
         else:
             self.node_map = map_sim
-        super().__init__(root, None, None, None) 
+        super().__init__(root, None, None, None)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
@@ -64,6 +65,7 @@ class GLDataSet(InMemoryDataset):
             inorder = f_raw
             y = 1 if y else 0    
             f_raw = parser(f_raw)
+            self.idx = 0
 
             subformulas = self.extract_subformulas(f_raw)
             expanded_subformulas = self.expand_all_subformulas(subformulas)
@@ -95,6 +97,7 @@ class GLDataSet(InMemoryDataset):
             elif depth == 0 and char in bop:
                 op = char
                 is_bop = 1
+                index_bop = i
             elif char == '(':
                 if depth == 0:
                     start = i
@@ -105,6 +108,10 @@ class GLDataSet(InMemoryDataset):
                     sub1 = formula[start:i+1]
                 if depth == 0 and is_bop:
                     sub2 = formula[start:i+1]
+        if op != '':
+            if is_bop and sub1 == '' and sub2 == '':
+                sub1 = formula[:index_bop].strip()
+                sub2 = formula[index_bop+1:].strip()
         return op, sub1, sub2
 
     def extract_subformulas(self, formula):
@@ -115,7 +122,7 @@ class GLDataSet(InMemoryDataset):
         """
         subformulas = {}
         sym_sub = {}
-        que = deque([(formula, "f0")])
+        que = deque([(formula, "0")])
         while que:
             f, f_id = que.pop()
             if f_id not in subformulas:
@@ -125,16 +132,38 @@ class GLDataSet(InMemoryDataset):
                         op = bop[i]
                         sub1 = f.formulas[0]
                         is_ocur = str(sub1)
-                        is_ocur = self.rem_par(is_ocur)
-
-                        if is_ocur not in sym_sub:
+                        is_ocur1 = self.rem_par(is_ocur)
+                        bool_is_oucr1 = 0
+                        if is_ocur1 not in sym_sub:
                             if isinstance(sub1, LTLfAtomic):
                                 sub1 = self.rem_par(str(sub1))
                             else:  
-                                que.appendleft((sub1, f'{f_id}1'))
-                                sub1 = f'{f_id}1'
+                                subop, subsub1, subsub2 = self.get_subformulas(is_ocur1)
+                                if subop != '' and subop in bop:
+                                    if subop != 'U':
+                                        eq_sub1_1 = f'({subsub2} {subop} {subsub1})'
+                                        eq_sub1_2 = f'({subsub1} {subop} {subsub2})'
+                                        eq_sub1_3 = f'{subsub2} {subop} {subsub1}'
+                                        eq_sub1_4 = f'{subsub1} {subop} {subsub2}'
+                                        for i in que:
+                                            if str(i[0]) == eq_sub1_1 or str(i[0]) == eq_sub1_2 or str(i[0]) == eq_sub1_3 or str(i[0]) == eq_sub1_4:
+                                                bool_is_oucr1 = 1
+                                                sub1 = i[1]
+                                    else:
+                                        eq_sub1_1 = f'({subsub1} {subop} {subsub2})'
+                                        eq_sub1_2 = f'{subsub1} {subop} {subsub2}'
+                                        for i in que:
+                                            if str(i[0]) == eq_sub1_1 or str(i[0]) == eq_sub1_2:
+                                                bool_is_oucr1 = 1
+                                                sub1 = i[1]
+
+                                if bool_is_oucr1 == 0:
+                                    self.idx += 1
+                                    que.appendleft((sub1, f'{self.idx}'))
+                                    sub1 = f'{self.idx}'
+
                         else:
-                            sub1 = sym_sub[is_ocur]                     
+                            sub1 = sym_sub[is_ocur1]                     
 
                         if len(f.formulas) == 2:
                             sub2 = f.formulas[1]
@@ -148,8 +177,9 @@ class GLDataSet(InMemoryDataset):
                                 if isinstance(sub2, LTLfAtomic):
                                     sub2 = self.rem_par(str(sub2))
                                 else:
-                                    que.appendleft((sub2, f'{f_id}2'))
-                                    sub2 = f'{f_id}2'
+                                    self.idx += 1
+                                    que.appendleft((sub2, f'{self.idx}'))
+                                    sub2 = f'{self.idx}'
                             else: 
                                 sub2 = sym_sub[is_ocur]
                             if op == 'U':
@@ -180,9 +210,10 @@ class GLDataSet(InMemoryDataset):
                                         is_ocur = str(ssub)
                                         is_ocur = self.rem_par(is_ocur)
                                         if is_ocur not in sym_sub:
-                                            que.appendleft((ssub, f'{f_id}{ids}'))
-                                            sub_s += f'({f_id}{ids})'
-                                            sym_s += f'{f_id}{ids}'
+                                            self.idx += 1
+                                            que.appendleft((ssub, f'{self.idx}'))
+                                            sub_s += f'({self.idx})'
+                                            sym_s += f'{self.idx}'
                                             ids += 1
                                         else:
                                             is_ocur = sym_sub[is_ocur]
@@ -205,18 +236,18 @@ class GLDataSet(InMemoryDataset):
                         is_ocur = str(sub1)
                         is_ocur = self.rem_par(is_ocur)
 
-                        if is_ocur not in sym_sub:  
+                        if is_ocur not in sym_sub:
                             if isinstance(sub1, LTLfAtomic):
                                 sub1 = self.rem_par(str(sub1))
                             else:
-                                que.appendleft((sub1, f'{f_id}1'))
-                                sub1 = f'{f_id}1'
-                        else:       
+                                self.idx += 1
+                                que.appendleft((sub1, f'{self.idx}'))
+                                sub1 = f'{self.idx}'
+                        else:
                             sub1 = sym_sub[is_ocur]
 
                         subformulas[f'{f_id}'] = f'{op}({sub1})'
                         sym_sub[f'{op}({sub1})'] = f'{f_id}'
-
         return subformulas
 
     def one_step_expansion(self, key, formula):
@@ -260,15 +291,14 @@ class GLDataSet(InMemoryDataset):
 
         vertices = dict()
         for key in sub_dict:
-            if key == 'f0' and key not in vertices:
+            if key == '0' and key not in vertices:
                 vertices[key] = [3, 0]
             elif key not in vertices:
                 vertices[key] = [0, 0]
 
         for key, value in sub_dict.items():
             op, sub1, sub2 = self.get_subformulas(value[0])
-            vertices[key][1] = node_op_type[op]      
-
+            vertices[key][1] = node_op_type[op]
             sub = value[0].split(op)
             if op in bop and len(sub) == 2:
                 if sub1[1:-1] not in vertices:
@@ -282,16 +312,14 @@ class GLDataSet(InMemoryDataset):
             
             elif op in uop:
                 if sub1[1:-1] not in vertices: 
-                    vertices[sub1[1:-1]] = [value[1], 0]
-
-            
+                    vertices[sub1[1:-1]] = [value[1], 0]    
         tmp = deepcopy(vertices)
 
         for key, value in tmp.items():
             op, sub1, sub2 = self.get_subformulas(key)
 
             if op != '':
-                vertices[key][1] = node_op_type[op] 
+                vertices[key][1] = node_op_type[op]
             if sub1 != '' and sub1[1:-1] not in vertices:
                 vertices[sub1[1:-1]] = [value[0], node_op_type[self.get_subformulas(sub1[1:-1])[0]]]
             if sub2 != '' and sub2[1:-1] not in vertices:
@@ -367,7 +395,7 @@ class GLDataSet(InMemoryDataset):
         for i in x:
             xx.append(self.node_map[tuple(i)])
 
-        ver_list.append('Universe')       
+        ver_list.append('Universe')
         u_index = len(ver_list) - 1
         for i in range(len(ver_list)-1):
             edge_index[0].append(i)
